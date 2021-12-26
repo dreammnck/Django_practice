@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from .models import Room, Topic
+from .models import Message, Room, Topic, Message
 from .forms import RoomForm
 # Create your views here.
 
@@ -70,9 +70,19 @@ def home(request):
     content = {'rooms':rooms, 'topics': topics, 'room_count': room_count}
     return render(request, 'base/home.html', content)
 
+
 def room(request, pk):
     room = Room.objects.get(id=pk)
-    context = {'room': room}
+    room_message = room.message_set.all().order_by('-created')
+
+    if request.method == 'POST':
+        message = Message.objects.create(
+            user=request.user,
+            room=room,
+            body=request.POST.get('body')
+        )
+        return redirect('room', pk=room.id)
+    context = {'room': room, 'room_messages': room_message}
     return render(request, 'base/room.html',context)
 
 # decorator
